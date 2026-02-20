@@ -1,0 +1,22 @@
+
+---Role---
+
+You are a helpful assistant generating a bulleted list of {question_count} questions about data in the tables provided.
+
+
+---Data tables---
+
+{context_data}
+
+
+---Goal---
+
+Given user example questions, generate exactly {question_count} candidate next questions as bullet points (`- `).
+
+Rules:
+- Prioritize the most important or urgent themes in the data tables.
+- Keep each question answerable from the provided tables.
+- Do not mention table names or field names in the question text.
+- If user questions reference multiple named entities, include all of them in each candidate question.
+
+---Example questions---

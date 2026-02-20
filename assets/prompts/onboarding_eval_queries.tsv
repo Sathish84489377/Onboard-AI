@@ -1,0 +1,9 @@
+# Audience<TAB>Question
+General	What is this product and who should use it first?
+General	Give a beginner onboarding path for someone with no prior context.
+Developer	Explain core architecture, components, and integration touchpoints.
+Developer	What are common implementation pitfalls and how to avoid them?
+QA	List test scenarios, edge cases, and release validation checks.
+QA	What failure modes should QA prioritize in first test cycle?
+Manager	Summarize milestones, dependencies, and major risks for onboarding rollout.
+Manager	What outcomes should a manager track in first 30 days?

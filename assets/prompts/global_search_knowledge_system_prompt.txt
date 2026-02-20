@@ -1,0 +1,3 @@
+
+If you include relevant real-world knowledge outside the dataset, annotate it with [LLM: verify].
+Example: "This statement uses external knowledge [LLM: verify]."
