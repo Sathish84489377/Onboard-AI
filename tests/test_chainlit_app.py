@@ -76,8 +76,8 @@ _ensure_autogen_stub()
 
 
 # Now safe to import the module's public symbols
-from onboard_ai.graphrag_service import (
-    has_data_citation,  # noqa: E402
+from onboard_ai.graphrag_service import (  # noqa: E402
+    has_data_citation,
     index_not_ready_message,
     index_ready,
 )

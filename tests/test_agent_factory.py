@@ -63,8 +63,8 @@ def _ensure_chainlit_stub() -> None:
 _ensure_autogen_stub()
 _ensure_chainlit_stub()
 
-from onboard_ai.agent_factory import (
-    create_retriever,  # noqa: E402
+from onboard_ai.agent_factory import (  # noqa: E402
+    create_retriever,
     create_specialists,
     create_user_proxy,
     select_specialist,
