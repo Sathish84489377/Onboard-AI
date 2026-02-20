@@ -12,6 +12,7 @@ Onboard AI is a local-first onboarding copilot for product teams. It ingests pro
 
 ## Project structure
 
+- `src/onboard_ai/cli.py` — package CLI commands (`onboard-ai-*`)
 - `src/onboard_ai/api/main.py` — FastAPI entrypoint
 - `src/onboard_ai/chainlit_app.py` — Chainlit chat app
 - `src/onboard_ai/services/` — query orchestration and fallback logic
@@ -27,6 +28,7 @@ Before setup, ensure:
 
 - Python 3.12+
 - Ollama installed and available on PATH
+- LiteLLM proxy reachable at `http://0.0.0.0:4000` (required for AutoGen specialist routing)
 - Docker (optional, only for SearXNG local web fallback)
 - Source docs available in `data/input`
 
@@ -39,6 +41,16 @@ Before setup, ensure:
 pip install -e .[dev]
 ```
 
+## CLI command reference
+
+- `onboard-ai-bootstrap` — pull models, convert source docs, and build GraphRAG index
+- `onboard-ai-ui` — run Chainlit app (`src/onboard_ai/chainlit_app.py`)
+- `onboard-ai-api` — run FastAPI service on `http://localhost:8000`
+- `onboard-ai-convert <input_dir> <output_dir>` — convert documents to markdown
+- `onboard-ai-profile` — profile query latency/memory
+- `onboard-ai-gate` — run local/global quality gate checks
+- `onboard-ai-prompt-audit` — audit prompt token usage under `assets/prompts`
+
 ## Quickstart (recommended)
 
 ### 1) Bootstrap RAG pipeline
@@ -49,7 +61,7 @@ onboard-ai-bootstrap
 
 This command:
 
-- pulls required Ollama models (`mistral-nemo`, `nomic-embed-text`, `llama3`)
+- pulls required Ollama models (`deepseek-r1:8b`, `qwen3-embedding:0.6b`)
 - converts source docs to markdown
 - builds GraphRAG index artifacts
 
@@ -67,6 +79,12 @@ Use this when models are already available:
 onboard-ai-bootstrap --skip-model-pull && onboard-ai-ui
 ```
 
+API-only run (optional):
+
+```bash
+onboard-ai-bootstrap --skip-model-pull && onboard-ai-api
+```
+
 ## First success check
 
 After quickstart, confirm all three checks:
@@ -75,21 +93,18 @@ After quickstart, confirm all three checks:
 2. Chainlit UI opens and is reachable at `http://localhost:8000`.
 3. Ask a simple onboarding question in UI (for example: `What does this project do?`) and verify you get a non-empty answer.
 
-Optional API check:
-
-```bash
-curl http://localhost:8000/health
-```
-
-Expected result:
-
-```json
-{"status":"ok"}
-```
-
 ## Runtime configuration
 
 Copy `env.sample` to `.env` and adjust as needed.
+
+Default AutoGen model calls are routed via LiteLLM proxy (`http://0.0.0.0:4000`) as defined in `src/onboard_ai/settings.py`.
+
+Quality-first ingestion defaults:
+
+```bash
+PDF_ENGINE=docling
+PDF_DOCLING_MAX_PAGES=0
+```
 
 Default runtime web fallback configuration:
 
@@ -112,8 +127,8 @@ Set `ENABLE_WEB_SEARCH=false` to disable web fallback globally.
 
 Ingestion uses a hybrid pipeline:
 
-- PDFs: `Docling` first, then `MarkItDown` fallback
-- Office/web formats (`.pptx`, `.docx`, `.xlsx`, `.html`, `.csv`, etc.): `MarkItDown`
+- PDFs: `Docling` by default, with `MarkItDown` fallback only if Docling fails
+- Office/web formats (`.pptx`, `.docx`, `.xlsx`, `.html`, `.htm`, `.csv`, `.json`, `.xml`): `Docling` first, with optional fallback
 - Plain text/code files: direct text reader
 
 Run conversion directly:
@@ -140,7 +155,33 @@ In UI settings, `(Web) Enable SearXNG fallback` is ON by default. It is used onl
 onboard-ai-api
 ```
 
-Set `enable_web_search: false` in request payload to disable fallback for a specific call.
+Set `"enable_web_search": false` in JSON request payload to disable fallback for a specific call.
+
+Health check (when FastAPI is running):
+
+```bash
+curl http://localhost:8000/health
+```
+
+Expected result:
+
+```json
+{"status":"ok"}
+```
+
+Sample query request:
+
+```bash
+curl -X POST http://localhost:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "What does this project do?",
+    "mode": "local",
+    "response_type": "single paragraph",
+    "community_level": 0,
+    "enable_web_search": true
+  }'
+```
 
 ## Optional: run SearXNG locally
 
@@ -161,6 +202,7 @@ onboard-ai-profile --mode local --repeat 2
 onboard-ai-profile --mode global --repeat 2
 onboard-ai-gate --mode local --repeat 2
 onboard-ai-gate --mode global --repeat 1 --max-p95-latency 20
+onboard-ai-prompt-audit
 ```
 
 ## Notes

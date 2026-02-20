@@ -3,26 +3,23 @@ requires      = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "autogen-graphrag-onboarding"
+name = "onboard-ai"
 version = "0.1.0"
 description = "Local-first GraphRAG + AutoGen onboarding assistant"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
-    "fastapi",
-    "uvicorn[standard]",
-    "litellm[proxy]",
-    "ollama",
-    "pyautogen[retrievechat]",
-    "tiktoken",
-    "chainlit",
-    "graphrag",
-    "marker-pdf",
-    "torch",
-    "docling",
-    "markitdown",
-    "psutil",
-    "typer>=0.16,<0.22",
+    "fastapi>=0.116.1,<1",
+    "uvicorn[standard]>=0.35,<0.36",
+    "litellm>=1.79,<2",
+    "ollama>=0.6,<0.7",
+    "pyautogen>=0.10,<0.11",
+    "tiktoken>=0.12,<0.13",
+    "chainlit==2.9.2",
+    "graphrag==3.0.2",
+    "docling>=2.5,<3",
+    "markitdown>=0.1,<0.2",
+    "psutil>=7,<8",
 ]
 
 [project.optional-dependencies]
@@ -50,7 +47,7 @@ include = ["onboard_ai*"]
 
 [tool.ruff]
 line-length    = 100
-target-version = "py311"
+target-version = "py312"
 exclude        = [".git", ".venv", "data", "cache"]
 
 [tool.ruff.lint]
@@ -63,7 +60,7 @@ addopts    = "-q"
 testpaths  = ["tests"]
 
 [tool.mypy]
-python_version         = "3.11"
+python_version         = "3.12"
 ignore_missing_imports = true
 warn_redundant_casts   = true
 warn_unused_ignores    = true
