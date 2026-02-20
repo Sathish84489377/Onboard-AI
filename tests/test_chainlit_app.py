@@ -13,6 +13,13 @@ import types
 from pathlib import Path
 from unittest.mock import MagicMock
 
+from onboard_ai.graphrag_service import (
+    has_data_citation,  # noqa: E402
+    index_not_ready_message,
+    index_ready,
+)
+from onboard_ai.settings import AUDIENCE_INSTRUCTION  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Ensure stubs for chainlit + autogen so the module can be imported.
 # ---------------------------------------------------------------------------
@@ -73,15 +80,6 @@ def _ensure_autogen_stub() -> None:
 
 _ensure_chainlit_full_stub()
 _ensure_autogen_stub()
-
-
-# Now safe to import the module's public symbols
-from onboard_ai.graphrag_service import (  # noqa: E402
-    has_data_citation,
-    index_not_ready_message,
-    index_ready,
-)
-from onboard_ai.settings import AUDIENCE_INSTRUCTION  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Tests focused on the building blocks used by chainlit_app handlers

@@ -5,6 +5,14 @@ from __future__ import annotations
 import sys
 import types
 
+from onboard_ai.agent_factory import (
+    create_retriever,
+    create_specialists,
+    create_user_proxy,
+    select_specialist,
+    specialist_system_message,
+)
+
 # ---------------------------------------------------------------------------
 # Stubs — autogen and chainlit are heavy; we mock at the module level.
 # ---------------------------------------------------------------------------
@@ -63,13 +71,6 @@ def _ensure_chainlit_stub() -> None:
 _ensure_autogen_stub()
 _ensure_chainlit_stub()
 
-from onboard_ai.agent_factory import (  # noqa: E402
-    create_retriever,
-    create_specialists,
-    create_user_proxy,
-    select_specialist,
-    specialist_system_message,
-)
 
 # ---------------------------------------------------------------------------
 # specialist_system_message
