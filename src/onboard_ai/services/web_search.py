@@ -1,8 +1,13 @@
+"""Web-search fallback via SearXNG.
+
+Provides ``search_web()``, ``augment_answer_with_web()``, and helpers for
+checking whether web search is enabled and formatting results.
+"""
+
 from __future__ import annotations
 
 import json
 import os
-from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -15,6 +20,7 @@ def _get_env_bool(name: str, default: bool = True) -> bool:
 
 
 def web_search_enabled(explicit_flag: bool | None = None) -> bool:
+    """Check whether web search is enabled via flag or ``ENABLE_WEB_SEARCH`` env var."""
     if explicit_flag is not None:
         return explicit_flag
     return _get_env_bool("ENABLE_WEB_SEARCH", default=True)
@@ -50,6 +56,18 @@ def _searxng_search(query: str, max_results: int = 5) -> list[dict[str, str]]:
 
 
 def search_web(query: str, max_results: int = 5) -> list[dict[str, str]]:
+    """Search the web using the configured provider (SearXNG).
+
+    Args:
+        query: Search query string.
+        max_results: Maximum results to return.
+
+    Returns:
+        List of dicts with 'title', 'content', and 'url' keys.
+
+    Raises:
+        ValueError: If the configured provider is unsupported.
+    """
     provider = os.getenv("WEB_SEARCH_PROVIDER", "searxng").strip().lower()
     if provider != "searxng":
         raise ValueError(
@@ -59,6 +77,7 @@ def search_web(query: str, max_results: int = 5) -> list[dict[str, str]]:
 
 
 def format_web_results(results: list[dict[str, str]]) -> str:
+    """Format web search results as a Markdown snippet for answer augmentation."""
     if not results:
         return ""
 
@@ -74,6 +93,7 @@ def format_web_results(results: list[dict[str, str]]) -> str:
 
 
 def augment_answer_with_web(answer: str, query: str, max_results: int = 5) -> str:
+    """Append web search context to ``answer``, handling errors gracefully."""
     try:
         results = search_web(query=query, max_results=max_results)
     except Exception as exc:  # noqa: BLE001
@@ -89,4 +109,5 @@ def augment_answer_with_web(answer: str, query: str, max_results: int = 5) -> st
 
 
 def has_any_citation(answer: str) -> bool:
+    """Return True if ``answer`` contains either a ``[Data:]`` or ``[Web:]`` citation."""
     return "[Data:" in answer or "[Web:" in answer

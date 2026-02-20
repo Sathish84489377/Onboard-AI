@@ -1,0 +1,27 @@
+# Onboard AI - LLM Context
+
+This file provides a concise summary for Large Language Models (LLMs) interacting with this codebase.
+
+## Project Identity
+**Name**: Onboard AI
+**Purpose**: Local-first GraphRAG onboarding assistant.
+**Status**: Alpha / Prototype.
+
+## Core Directives
+1.  **Architecture**: Python-based using Chainlit (UI), FastAPI (API), and GraphRAG (Knowledge).
+2.  **State**: Stateless backend, but Chainlit maintains session state per user.
+3.  **Data**: Documents are ingested -> Converted to Markdown -> Indexed by GraphRAG -> Queried via Local/Global search.
+
+## Critical Files
+-   `src/onboard_ai/chainlit_app.py`: **Main UI Logic**. Edit this to change the chat experience.
+-   `src/onboard_ai/graphrag_service.py`: **RAG Logic**. Edit this to change how answers are retrieved.
+-   `pyproject.toml`: **Dependencies and entry points**.
+-   `settings.yaml`: **GraphRAG Configuration**.
+
+## Style Guide
+-   Python 3.12+ features allowed (type hinting, f-strings).
+-   Prefer `pathlib` over `os.path`.
+-   Use `async/await` for I/O bound operations, especially in Chainlit handlers.
+-   Docstrings required for all complex logic.
+
+See `CONTEXT.md` for detailed architecture.

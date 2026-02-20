@@ -8,6 +8,15 @@ version = "0.1.0"
 description = "Local-first GraphRAG + AutoGen onboarding assistant"
 readme = "README.md"
 requires-python = ">=3.12"
+license = "MIT"
+authors = [{ name = "Onboard AI Contributors" }]
+keywords = ["graphrag", "onboarding", "autogen", "chainlit", "rag"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Framework :: FastAPI",
+]
 dependencies = [
     "fastapi>=0.116.1,<1",
     "uvicorn[standard]>=0.35,<0.36",
@@ -30,6 +39,7 @@ dev = [
     "ruff>=0.9.0",
     "mypy>=1.11",
     "types-psutil",
+    "pre-commit",
 ]
 
 [project.scripts]

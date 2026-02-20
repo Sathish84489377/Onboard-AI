@@ -1,14 +1,20 @@
+"""Prompt token auditor — measures and ranks optimisation headroom.
+
+Reads prompt file paths from ``settings.yaml``, counts tokens (current vs.
+git HEAD), estimates a lean-but-equivalent version, and produces Markdown +
+JSON reports under ``assets/prompts/proofing/``.
+"""
+
 from __future__ import annotations
 
 import argparse
 import json
 import re
 import subprocess
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import tiktoken
-
 
 PROMPT_KEY_PATTERN = re.compile(r"\b(?:\w+_)?prompt\s*:\s*[\"'](assets/prompts/[^\"']+)[\"']")
 
@@ -26,10 +32,12 @@ class PromptAuditRow:
 
 
 def read_text(path: Path) -> str:
+    """Read and return the UTF-8 text content of ``path``."""
     return path.read_text(encoding="utf-8")
 
 
 def prompt_paths_from_settings(settings_path: Path) -> list[Path]:
+    """Extract prompt file paths referenced in ``settings.yaml``."""
     text = read_text(settings_path)
     matches = PROMPT_KEY_PATTERN.findall(text)
     unique = sorted(set(matches))
@@ -37,11 +45,13 @@ def prompt_paths_from_settings(settings_path: Path) -> list[Path]:
 
 
 def token_count(text: str, encoding_name: str) -> int:
+    """Count the number of tokens in ``text`` using the named tiktoken encoding."""
     enc = tiktoken.get_encoding(encoding_name)
     return len(enc.encode(text))
 
 
 def git_show_head(repo_root: Path, relative_file: Path) -> str | None:
+    """Return the file content at ``HEAD`` via ``git show``, or None on failure."""
     try:
         proc = subprocess.run(
             ["git", "show", f"HEAD:{relative_file.as_posix()}"],
@@ -63,11 +73,11 @@ def estimate_minimal_prompt_text(text: str) -> str:
     keep: list[str] = []
 
     skip_patterns = [
-        r'^\s*For example:\s*$',
+        r"^\s*For example:\s*$",
         r'^\s*"This is an example sentence supported by',
-        r'^\s*where\s+\d+.*represent the id',
-        r'^\s*Add sections and commentary to the response as appropriate for the length and format\.?\s*$',
-        r'^\s*Style the response in markdown\.?\s*$',
+        r"^\s*where\s+\d+.*represent the id",
+        r"^\s*Add sections and commentary to the response as appropriate for the length and format\.?\s*$",
+        r"^\s*Style the response in markdown\.?\s*$",
     ]
     skip_regexes = [re.compile(p, re.IGNORECASE) for p in skip_patterns]
 
@@ -92,6 +102,7 @@ def estimate_minimal_prompt_text(text: str) -> str:
 
 
 def audit_prompt(repo_root: Path, prompt_path: Path, encoding_name: str) -> PromptAuditRow:
+    """Audit a single prompt file: count tokens, compute delta vs HEAD, estimate headroom."""
     rel = prompt_path.relative_to(repo_root)
     after_text = read_text(prompt_path)
     before_text = git_show_head(repo_root, rel)
@@ -100,7 +111,11 @@ def audit_prompt(repo_root: Path, prompt_path: Path, encoding_name: str) -> Prom
     after_tokens = token_count(after_text, encoding_name)
 
     delta_tokens = (after_tokens - before_tokens) if before_tokens is not None else None
-    delta_pct = ((delta_tokens / before_tokens) * 100.0) if before_tokens else None
+    delta_pct = (
+        (delta_tokens / before_tokens) * 100.0
+        if before_tokens and delta_tokens is not None
+        else None
+    )
 
     est_min_text = estimate_minimal_prompt_text(after_text)
     est_min_tokens = token_count(est_min_text, encoding_name)
@@ -120,6 +135,7 @@ def audit_prompt(repo_root: Path, prompt_path: Path, encoding_name: str) -> Prom
 
 
 def render_markdown(rows: list[PromptAuditRow], encoding_name: str) -> str:
+    """Render a Markdown report from audit rows."""
     total_before = sum(r.before_tokens for r in rows if r.before_tokens is not None)
     total_after = sum(r.after_tokens for r in rows)
     comparable = [r for r in rows if r.before_tokens is not None]
@@ -160,9 +176,7 @@ def render_markdown(rows: list[PromptAuditRow], encoding_name: str) -> str:
 
     lines.extend(["", "## Optimization headroom ranking", ""])
     for i, r in enumerate(top, 1):
-        lines.append(
-            f"{i}. `{r.path}` — {r.headroom_tokens} tokens ({r.headroom_pct:.1f}%)"
-        )
+        lines.append(f"{i}. `{r.path}` — {r.headroom_tokens} tokens ({r.headroom_pct:.1f}%)")
 
     lines.append("")
     lines.append("## Notes")

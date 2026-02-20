@@ -1,3 +1,11 @@
+"""
+Document conversion utility for the GraphRAG pipeline.
+
+This module provides tools to convert various document formats (PDF, DOCX, XLSX, HTML, etc.)
+into Markdown format suitable for ingestion by GraphRAG. It utilizes 'docling' and 'markitdown'
+libraries for robust extraction.
+"""
+
 import argparse
 import json
 import os
@@ -84,13 +92,13 @@ def _prefer_markitdown_for_pdf(
 
 def convert_document(
     file_path: Path,
-    converter,
+    converter: object,
     md: MarkItDown | None,
     fallback_engine: str,
     pdf_engine: str,
     pdf_docling_max_mb: int,
     pdf_docling_max_pages: int,
-):
+) -> tuple[str | None, str]:
     """Convert document to markdown content and return (content, converter_name)."""
     ext = file_path.suffix.lower()
     print(f"Processing: {file_path}")
@@ -104,6 +112,7 @@ def convert_document(
             md=md,
         ):
             print(" -> Using MarkItDown for PDF (configured strategy)...")
+            assert md is not None  # guaranteed by _prefer_markitdown_for_pdf
             return _convert_with_markitdown(file_path, md), "markitdown(pdf-strategy)"
 
         print(f" -> Using Docling for document format ({ext})...")
@@ -135,7 +144,8 @@ def _build_markdown_payload(markdown_text: str, source_file: Path, converter_nam
     return "\n".join(header) + markdown_text
 
 
-def main():
+def main() -> None:
+    """CLI entry point: convert documents in a directory to Markdown for GraphRAG ingestion."""
     parser = argparse.ArgumentParser(
         description="Universal document converter for GraphRAG ingestion"
     )

@@ -1,0 +1,112 @@
+completion_models:
+  default_completion_model:
+    model_provider: ollama
+    model: deepseek-r1:8b
+    temperature: 0
+    auth_method: api_key
+    api_key: ${GRAPHRAG_API_KEY}
+    api_base: "http://localhost:11434"
+    retry:
+      type: exponential_backoff
+
+embedding_models:
+  default_embedding_model:
+    model_provider: ollama
+    model: qwen3-embedding:0.6b
+    auth_method: api_key
+    api_key: ${GRAPHRAG_API_KEY}
+    api_base: "http://localhost:11434"
+    retry:
+      type: exponential_backoff
+
+input:
+  type: text
+
+chunking:
+  type: tokens
+  size: 1000
+  overlap: 80
+  encoding_model: o200k_base
+
+input_storage:
+  type: file
+  base_dir: "data/input/markdown"
+
+output_storage:
+  type: file
+  base_dir: "data/output"
+
+reporting:
+  type: file
+  base_dir: "data/logs"
+
+cache:
+  type: json
+  storage:
+    type: file
+    base_dir: "data/cache"
+
+vector_store:
+  type: lancedb
+  db_uri: "data/output/lancedb"
+
+embed_text:
+  embedding_model_id: default_embedding_model
+
+extract_graph:
+  completion_model_id: default_completion_model
+  prompt: "assets/prompts/extract_graph.txt"
+  entity_types: [organization, person, geo, event]
+  max_gleanings: 1
+
+summarize_descriptions:
+  completion_model_id: default_completion_model
+  prompt: "assets/prompts/summarize_descriptions.txt"
+  max_length: 350
+
+extract_graph_nlp:
+  text_analyzer:
+    extractor_type: regex_english
+
+cluster_graph:
+  max_cluster_size: 12
+
+extract_claims:
+  enabled: false
+  completion_model_id: default_completion_model
+  prompt: "assets/prompts/extract_claims.txt"
+  description: "Any claims or facts that could be relevant to information discovery."
+  max_gleanings: 1
+
+community_reports:
+  completion_model_id: default_completion_model
+  graph_prompt: "assets/prompts/community_report_graph.txt"
+  text_prompt: "assets/prompts/community_report_text.txt"
+  max_length: 1500
+  max_input_length: 6000
+
+snapshots:
+  graphml: false
+  embeddings: false
+
+local_search:
+  completion_model_id: default_completion_model
+  embedding_model_id: default_embedding_model
+  prompt: "assets/prompts/local_search_system_prompt.txt"
+
+global_search:
+  completion_model_id: default_completion_model
+  map_prompt: "assets/prompts/global_search_map_system_prompt.txt"
+  reduce_prompt: "assets/prompts/global_search_reduce_system_prompt.txt"
+  knowledge_prompt: "assets/prompts/global_search_knowledge_system_prompt.txt"
+
+drift_search:
+  completion_model_id: default_completion_model
+  embedding_model_id: default_embedding_model
+  prompt: "assets/prompts/drift_search_system_prompt.txt"
+  reduce_prompt: "assets/prompts/drift_reduce_prompt.txt"
+
+basic_search:
+  completion_model_id: default_completion_model
+  embedding_model_id: default_embedding_model
+  prompt: "assets/prompts/basic_search_system_prompt.txt"

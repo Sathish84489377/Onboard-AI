@@ -1,3 +1,9 @@
+"""Local quality gate for the onboarding chatbot.
+
+Runs evaluation queries, measures citation rate, uncertainty rate, and p95
+latency against configurable thresholds and exits non-zero on failure.
+"""
+
 import argparse
 import statistics
 import time
@@ -5,19 +11,24 @@ from pathlib import Path
 
 from graphrag.cli.query import run_global_search, run_local_search
 
-
-def index_ready(root_dir: Path) -> bool:
-    output_dir = root_dir / "data" / "output"
-    if not output_dir.exists():
-        return False
-    if (output_dir / "lancedb").exists():
-        return True
-    if list(output_dir.rglob("*.parquet")):
-        return True
-    return False
+from onboard_ai.graphrag_service import index_ready
+from onboard_ai.settings import AUDIENCE_INSTRUCTION
 
 
 def read_eval_cases(file_path: Path) -> list[dict]:
+    """Parse a TSV file of ``<Audience>\t<Question>`` lines into case dicts.
+
+    Skips blank lines and ``#`` comments.
+
+    Args:
+        file_path: Path to the TSV evaluation file.
+
+    Returns:
+        List of dicts with 'audience' and 'question' keys.
+
+    Raises:
+        ValueError: If a non-comment line doesn't have exactly two tab-separated fields.
+    """
     cases: list[dict] = []
     for raw in file_path.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
@@ -37,20 +48,17 @@ def read_eval_cases(file_path: Path) -> list[dict]:
 
 
 def audience_instruction(audience: str) -> str:
-    audience_map = {
-        "General": "Use plain language and explain product terms briefly.",
-        "Developer": "Focus on architecture, APIs, dependencies, and implementation detail.",
-        "QA": "Focus on test scenarios, edge cases, validations, and release risk.",
-        "Manager": "Focus on outcomes, timelines, risks, ownership, and business impact.",
-    }
-    return audience_map.get(audience, audience_map["General"])
+    """Return the audience-specific instruction from the canonical map in ``settings.py``."""
+    return AUDIENCE_INSTRUCTION.get(audience, AUDIENCE_INSTRUCTION["General"])
 
 
 def contains_citation(text: str) -> bool:
+    """Return True if ``text`` contains a ``[Data: ...]`` citation."""
     return "[Data:" in text
 
 
 def is_uncertain(text: str) -> bool:
+    """Return True if ``text`` contains hedging phrases indicating low confidence."""
     lowered = text.lower()
     triggers = [
         "i don't know",
@@ -72,6 +80,7 @@ def run_query(
     response_type: str,
     community: int,
 ) -> tuple[str, float]:
+    """Execute a single GraphRAG query and return (answer, latency_seconds)."""
     start = time.perf_counter()
     if mode == "local":
         result, _ = run_local_search(
@@ -99,6 +108,7 @@ def run_query(
 
 
 def main() -> int:
+    """CLI entry point for the local quality gate. Returns 0 on pass, 1 on fail, 2 on error."""
     parser = argparse.ArgumentParser(description="Local quality gate for onboarding chatbot.")
     parser.add_argument("--root", default=".", help="GraphRAG root directory (default: .)")
     parser.add_argument(
@@ -132,7 +142,9 @@ def main() -> int:
         return 2
 
     results = []
-    print(f"Running local quality gate with {len(cases)} case(s), repeat={args.repeat}, mode={args.mode}")
+    print(
+        f"Running local quality gate with {len(cases)} case(s), repeat={args.repeat}, mode={args.mode}"
+    )
 
     for case in cases:
         audience = case["audience"]

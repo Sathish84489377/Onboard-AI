@@ -1,10 +1,18 @@
-from autogen import AssistantAgent  # type: ignore[import-not-found]
+"""Factory functions for creating AutoGen agents used in the Chainlit chat session.
 
-from onboard_ai.settings import LLM_CONFIG_AUTOGEN, SPECIALIST_NAME_BY_AUDIENCE
+Creates a Retriever agent, a User Proxy, and audience-specific Specialist
+agents (Developer, QA, Manager). The ``select_specialist`` helper picks the
+right specialist based on the active audience setting.
+"""
+
+from autogen import AssistantAgent
+
 from onboard_ai.chainlit_agents import ChainlitAssistantAgent, ChainlitUserProxyAgent
+from onboard_ai.settings import LLM_CONFIG_AUTOGEN, SPECIALIST_NAME_BY_AUDIENCE
 
 
 def specialist_system_message(audience: str) -> str:
+    """Build the system prompt for an audience-specific specialist agent."""
     return (
         f"You are the {audience} onboarding specialist. "
         "Use query_graphRAG to gather evidence first, then provide an answer in that audience style. "
@@ -14,6 +22,7 @@ def specialist_system_message(audience: str) -> str:
 
 
 def create_retriever() -> AssistantAgent:
+    """Create the Retriever agent that calls ``query_graphRAG``."""
     return AssistantAgent(
         name="Retriever",
         llm_config=LLM_CONFIG_AUTOGEN,
@@ -28,6 +37,7 @@ def create_retriever() -> AssistantAgent:
 
 
 def create_user_proxy() -> ChainlitUserProxyAgent:
+    """Create the User Proxy agent that represents the human user."""
     return ChainlitUserProxyAgent(
         name="User_Proxy",
         human_input_mode="ALWAYS",
@@ -40,6 +50,7 @@ def create_user_proxy() -> ChainlitUserProxyAgent:
 
 
 def create_specialists() -> dict[str, ChainlitAssistantAgent]:
+    """Create one specialist agent per audience role (Developer, QA, Manager)."""
     return {
         "Developer_Specialist": ChainlitAssistantAgent(
             name="Developer_Specialist",
@@ -68,6 +79,9 @@ def create_specialists() -> dict[str, ChainlitAssistantAgent]:
     }
 
 
-def select_specialist(audience: str, specialists: dict):
+def select_specialist(
+    audience: str, specialists: dict[str, ChainlitAssistantAgent]
+) -> ChainlitAssistantAgent | None:
+    """Return the specialist agent for the given audience, defaulting to Developer."""
     name = SPECIALIST_NAME_BY_AUDIENCE.get(audience, "Developer_Specialist")
     return specialists.get(name)

@@ -5,5 +5,4 @@ __pycache__/
 data/input
 cache
 data/output
-settings.yaml
 .env

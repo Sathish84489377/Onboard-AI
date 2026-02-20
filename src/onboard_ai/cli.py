@@ -1,3 +1,9 @@
+"""CLI entry points for bootstrapping, launching the UI, and starting the API.
+
+Each public function maps to a ``[project.scripts]`` console entry point
+defined in ``pyproject.toml``.
+"""
+
 import argparse
 import os
 import shutil
@@ -45,6 +51,11 @@ def _ollama_model_available(model: str) -> bool:
 
 
 def bootstrap() -> None:
+    """Pull Ollama models, convert documents, and build the GraphRAG index.
+
+    Orchestrates the full first-run setup sequence. CLI arguments control
+    root directory, PDF engine selection, and model-pull behaviour.
+    """
     parser = argparse.ArgumentParser(
         description="Bootstrap Onboard AI: pull models, convert docs, and build GraphRAG index."
     )
@@ -140,9 +151,11 @@ def bootstrap() -> None:
 
 
 def run_ui() -> None:
+    """Launch the Chainlit chat UI."""
     _assert_chainlit_installed()
     subprocess.run(["chainlit", "run", "src/onboard_ai/chainlit_app.py"], check=True)
 
 
 def run_api() -> None:
+    """Start the FastAPI server via uvicorn on port 8000."""
     uvicorn.run("onboard_ai.api.main:app", host="0.0.0.0", port=8000, reload=True)

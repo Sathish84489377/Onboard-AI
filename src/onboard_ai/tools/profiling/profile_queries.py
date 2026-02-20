@@ -1,25 +1,23 @@
+"""Latency and memory profiler for GraphRAG queries.
+
+Runs a set of queries (from file or built-in defaults) against the index and
+reports mean/p50/p95 latency plus RSS memory deltas.
+"""
+
 import argparse
 import statistics
 import time
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 import psutil
 from graphrag.cli.query import run_global_search, run_local_search
 
-
-def index_ready(root_dir: Path) -> bool:
-    output_dir = root_dir / "data" / "output"
-    if not output_dir.exists():
-        return False
-    if (output_dir / "lancedb").exists():
-        return True
-    if list(output_dir.rglob("*.parquet")):
-        return True
-    return False
+from onboard_ai.graphrag_service import index_ready
 
 
 def read_queries(query_file: Path | None) -> list[str]:
+    """Read queries from a file or return built-in defaults if ``query_file`` is None."""
     if query_file is None:
         return [
             "What is this product and who should use it?",
@@ -45,6 +43,7 @@ def run_once(
     response_type: str,
     community: int,
 ) -> tuple[float, float, int]:
+    """Run a single query and return (latency_secs, rss_delta_mb, answer_len)."""
     proc = psutil.Process()
     rss_before = proc.memory_info().rss
     start = time.perf_counter()
@@ -78,6 +77,7 @@ def run_once(
 
 
 def percentile(values: Iterable[float], p: float) -> float:
+    """Compute the ``p``-th percentile from ``values`` using nearest-rank."""
     seq = sorted(values)
     if not seq:
         return 0.0
@@ -86,6 +86,7 @@ def percentile(values: Iterable[float], p: float) -> float:
 
 
 def main() -> None:
+    """CLI entry point for the query profiler."""
     parser = argparse.ArgumentParser(description="Profile GraphRAG query latency and memory.")
     parser.add_argument("--root", default=".", help="GraphRAG root directory (default: .)")
     parser.add_argument(

@@ -9,11 +9,11 @@ from onboard_ai.tools.profiling.prompt_token_audit import (
 def test_prompt_paths_from_settings_extracts_prompt_keys(tmp_path: Path) -> None:
     settings = tmp_path / "settings.yaml"
     settings.write_text(
-        '\n'.join(
+        "\n".join(
             [
-                'local_search:',
+                "local_search:",
                 '  prompt: "assets/prompts/local_search_system_prompt.txt"',
-                'global_search:',
+                "global_search:",
                 '  map_prompt: "assets/prompts/global_search_map_system_prompt.txt"',
                 '  reduce_prompt: "assets/prompts/global_search_reduce_system_prompt.txt"',
                 '  knowledge_prompt: "assets/prompts/global_search_knowledge_system_prompt.txt"',
